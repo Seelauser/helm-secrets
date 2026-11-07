@@ -51,7 +51,8 @@ load '../bats/extensions/bats-file/load'
     run env HELM_SECRETS_SOPS_PATH="${TEST_TEMP_DIR}/does-not-exist" WSLENV="HELM_SECRETS_SOPS_PATH:${WSLENV}" \
         "${HELM_BIN}" secrets doctor
     assert_failure
-    assert_output --partial "[FAIL] sops binary '${TEST_TEMP_DIR}/does-not-exist' not found in PATH"
+    # Windows shells may rewrite the path (e.g. /tmp -> C:/Users/.../Temp), so only match its ends
+    assert_output --regexp "\[FAIL\] sops binary '[^']*does-not-exist' not found in PATH"
     assert_output --partial 'Summary: 1 failed'
 }
 
@@ -63,7 +64,7 @@ load '../bats/extensions/bats-file/load'
     run env HELM_SECRETS_VALS_PATH="${TEST_TEMP_DIR}/does-not-exist" WSLENV="HELM_SECRETS_VALS_PATH:${WSLENV}" \
         "${HELM_BIN}" secrets doctor
     assert_failure
-    assert_output --partial "[FAIL] vals binary '${TEST_TEMP_DIR}/does-not-exist' not found in PATH"
+    assert_output --regexp "\[FAIL\] vals binary '[^']*does-not-exist' not found in PATH"
 }
 
 @test "doctor: fails if SOPS_AGE_KEY_FILE does not exist" {
@@ -74,7 +75,7 @@ load '../bats/extensions/bats-file/load'
     run env SOPS_AGE_KEY_FILE="${TEST_TEMP_DIR}/missing-keys.txt" WSLENV="SOPS_AGE_KEY_FILE:${WSLENV}" \
         "${HELM_BIN}" secrets doctor
     assert_failure
-    assert_output --partial "[FAIL] age: SOPS_AGE_KEY_FILE is set, but '${TEST_TEMP_DIR}/missing-keys.txt' does not exist"
+    assert_output --regexp "\[FAIL\] age: SOPS_AGE_KEY_FILE is set, but '[^']*missing-keys\.txt' does not exist"
 }
 
 @test "doctor: accepts an existing SOPS_AGE_KEY_FILE" {
