@@ -41,9 +41,59 @@ Decrypted files have the suffix ".dec" by default. This can be changed using the
   encrypt Encrypt secrets file
   decrypt Decrypt secrets file
   edit    Edit secrets file and encrypt afterwards
+  doctor  Check the helm-secrets setup (plugins, backend, keys, security settings)
 ```
 
 Each of these commands have their own help.
+
+## Troubleshooting with `helm secrets doctor`
+
+`helm secrets doctor` is a read-only check of the local setup. Run it first when something does not work, e.g. after
+upgrading to Helm 4 or when setting up a new CI runner or Argo CD repo-server image.
+
+```
+$ helm secrets doctor
+helm-secrets doctor
+
+Helm
+[ OK ] helm 4.3.1 (helm)
+
+helm-secrets plugins
+[ OK ] helm-secrets 4.7.11-dev
+[ OK ] plugin 'secrets' 4.7.11-dev
+[ OK ] plugin 'secrets-getter' 4.7.11-dev
+[FAIL] plugin 'secrets-post-renderer' is not installed: --evaluate-templates will not work
+
+Secret backend
+[INFO] backend 'sops'
+[ OK ] sops 3.13.3 (sops)
+
+Decryption keys (presence only, contents are never read)
+[ OK ] age: key file found at '/home/user/.config/sops/age/keys.txt'
+[ OK ] gpg: 'gpg' available
+
+Security
+[INFO] HELM_SECRETS_ALLOWED_BACKENDS is not set (recommended in shared environments such as Argo CD)
+[ OK ] curl or wget available for remote (http/https) value files
+
+Summary: 1 failed, 0 warning(s)
+```
+
+What it checks:
+
+- **Helm**: the `helm` binary (or `HELM_SECRETS_HELM_PATH`) runs, and which version it is.
+- **Plugins**: on Helm 4, that all three plugins (`secrets`, `secrets-getter`, `secrets-post-renderer`) are installed
+  with the same version. On Helm 3, that the `secrets` plugin is listed.
+- **Secret backend**: the selected backend (`--backend`/`HELM_SECRETS_BACKEND`) binary is found and recent enough. For
+  sops older than 3.12.0 it notes that post-quantum age recipients are not supported.
+- **Keys** (sops only): whether `SOPS_AGE_KEY`, `SOPS_AGE_KEY_CMD`, `SOPS_AGE_KEY_FILE`, the default age key file or `gpg`
+  is available. Key files are only tested for existence; their contents are never read or printed.
+- **Security**: whether `HELM_SECRETS_ALLOWED_BACKENDS` is set (a warning inside Argo CD, where it is recommended), and
+  whether `curl` or `wget` is available for remote value files.
+
+Every check is printed with a status: `[ OK ]`, `[INFO]`, `[WARN]` or `[FAIL]`. The command exits with `1` if at least
+one check failed, so it can be used as a gate in CI pipelines or container image builds. Warnings do not change the exit
+code.
 
 # Use-case and workflow
 
