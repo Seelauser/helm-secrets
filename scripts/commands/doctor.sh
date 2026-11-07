@@ -174,6 +174,26 @@ _doctor_check_backend() {
     fi
 }
 
+# Returns 0 if file $1 exists. On WSL and Cygwin, sops may be a Windows binary
+# that receives Windows paths (C:\...), so those are converted before testing.
+_doctor_file_exists() {
+    if [ -f "${1}" ]; then
+        return 0
+    fi
+
+    case "${1}" in
+    [A-Za-z]:\\* | [A-Za-z]:/* | \\\\*)
+        if on_wsl && command -v wslpath >/dev/null 2>&1; then
+            [ -f "$(wslpath -u "${1}" 2>/dev/null)" ] && return 0
+        elif on_cygwin; then
+            [ -f "$(cygpath -u "${1}" 2>/dev/null)" ] && return 0
+        fi
+        ;;
+    esac
+
+    return 1
+}
+
 # Only tests whether key material is configured. Never reads it.
 _doctor_check_keys() {
     [ "${SECRET_BACKEND}" = "sops" ] || return 0
@@ -193,7 +213,7 @@ _doctor_check_keys() {
     fi
 
     if [ -n "${SOPS_AGE_KEY_FILE:-}" ]; then
-        if [ -f "${SOPS_AGE_KEY_FILE}" ]; then
+        if _doctor_file_exists "${SOPS_AGE_KEY_FILE}"; then
             _doctor_ok "age: SOPS_AGE_KEY_FILE points to an existing file"
             found=true
         else

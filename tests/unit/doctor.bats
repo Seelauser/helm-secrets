@@ -48,7 +48,8 @@ load '../bats/extensions/bats-file/load'
         skip
     fi
 
-    HELM_SECRETS_SOPS_PATH="${TEST_TEMP_DIR}/does-not-exist" run "${HELM_BIN}" secrets doctor
+    run env HELM_SECRETS_SOPS_PATH="${TEST_TEMP_DIR}/does-not-exist" WSLENV="HELM_SECRETS_SOPS_PATH:${WSLENV}" \
+        "${HELM_BIN}" secrets doctor
     assert_failure
     assert_output --partial "[FAIL] sops binary '${TEST_TEMP_DIR}/does-not-exist' not found in PATH"
     assert_output --partial 'Summary: 1 failed'
@@ -59,7 +60,8 @@ load '../bats/extensions/bats-file/load'
         skip
     fi
 
-    HELM_SECRETS_VALS_PATH="${TEST_TEMP_DIR}/does-not-exist" run "${HELM_BIN}" secrets doctor
+    run env HELM_SECRETS_VALS_PATH="${TEST_TEMP_DIR}/does-not-exist" WSLENV="HELM_SECRETS_VALS_PATH:${WSLENV}" \
+        "${HELM_BIN}" secrets doctor
     assert_failure
     assert_output --partial "[FAIL] vals binary '${TEST_TEMP_DIR}/does-not-exist' not found in PATH"
 }
@@ -69,7 +71,8 @@ load '../bats/extensions/bats-file/load'
         skip
     fi
 
-    SOPS_AGE_KEY_FILE="${TEST_TEMP_DIR}/missing-keys.txt" run "${HELM_BIN}" secrets doctor
+    run env SOPS_AGE_KEY_FILE="${TEST_TEMP_DIR}/missing-keys.txt" WSLENV="SOPS_AGE_KEY_FILE:${WSLENV}" \
+        "${HELM_BIN}" secrets doctor
     assert_failure
     assert_output --partial "[FAIL] age: SOPS_AGE_KEY_FILE is set, but '${TEST_TEMP_DIR}/missing-keys.txt' does not exist"
 }
@@ -79,7 +82,8 @@ load '../bats/extensions/bats-file/load'
         skip
     fi
 
-    SOPS_AGE_KEY_FILE="$(_winpath "${TEST_TEMP_DIR}/assets/age/key.txt")" run "${HELM_BIN}" secrets doctor
+    run env SOPS_AGE_KEY_FILE="$(_winpath "${TEST_TEMP_DIR}/assets/age/key.txt")" WSLENV="SOPS_AGE_KEY_FILE:${WSLENV}" \
+        "${HELM_BIN}" secrets doctor
     assert_success
     assert_output --partial '[ OK ] age: SOPS_AGE_KEY_FILE points to an existing file'
 }
@@ -89,14 +93,15 @@ load '../bats/extensions/bats-file/load'
         skip
     fi
 
-    SOPS_AGE_KEY="AGE-SECRET-KEY-DOCTOR-MUST-NOT-PRINT-THIS" run "${HELM_BIN}" secrets doctor
+    run env SOPS_AGE_KEY="AGE-SECRET-KEY-DOCTOR-MUST-NOT-PRINT-THIS" WSLENV="SOPS_AGE_KEY:${WSLENV}" \
+        "${HELM_BIN}" secrets doctor
     assert_success
     assert_output --partial '[ OK ] age: SOPS_AGE_KEY is set'
     refute_output --partial 'DOCTOR-MUST-NOT-PRINT-THIS'
 }
 
 @test "doctor: warns if HELM_SECRETS_ALLOWED_BACKENDS is unset inside Argo CD" {
-    ARGOCD_APP_NAME=doctor run "${HELM_BIN}" secrets doctor
+    run env ARGOCD_APP_NAME=doctor WSLENV="ARGOCD_APP_NAME:${WSLENV}" "${HELM_BIN}" secrets doctor
     assert_success
     assert_output --partial '[WARN] HELM_SECRETS_ALLOWED_BACKENDS is not set inside Argo CD'
 }
@@ -106,7 +111,8 @@ load '../bats/extensions/bats-file/load'
         skip
     fi
 
-    HELM_SECRETS_ALLOWED_BACKENDS=sops,vals run "${HELM_BIN}" secrets doctor
+    run env HELM_SECRETS_ALLOWED_BACKENDS=sops,vals WSLENV="HELM_SECRETS_ALLOWED_BACKENDS:${WSLENV}" \
+        "${HELM_BIN}" secrets doctor
     assert_success
     assert_output --partial '[ OK ] HELM_SECRETS_ALLOWED_BACKENDS=sops,vals'
 }
