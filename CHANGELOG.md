@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `helm secrets doctor`: read-only check of the local setup. It covers Helm, the Helm 4 plugin trio and its versions, the secret backend binary and version, the presence of age/gpg keys (contents are never read), `HELM_SECRETS_ALLOWED_BACKENDS` and curl/wget. Exits non-zero if a check fails.
+
 ## [4.7.10] - 2026-10-25
 
 ### Security

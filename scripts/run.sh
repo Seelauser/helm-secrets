@@ -157,6 +157,15 @@ while true; do
         _helm_winpath "$(dirname "${SCRIPT_DIR}")"
         break
         ;;
+    doctor)
+        # shellcheck source=scripts/commands/version.sh
+        . "${SCRIPT_DIR}/commands/version.sh"
+        # shellcheck source=scripts/commands/doctor.sh
+        . "${SCRIPT_DIR}/commands/doctor.sh"
+
+        doctor
+        break
+        ;;
     post-renderer)
         # shellcheck source=scripts/commands/downloader.sh
         . "${SCRIPT_DIR}/commands/post-renderer.sh"
